@@ -2,6 +2,7 @@ package br.com.NatanLima.certificados;
 
 public class Main {
     public static void main(String[] args) {
-        new GeradorCertificados().gerarCertificados();
+        System.out.println("✅ Projeto iniciado com sucesso!");
+        // Aqui você chamará depois o GeradorCertificados
     }
 }

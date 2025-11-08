@@ -1,87 +1,115 @@
-package br.com.NatanLima.certificados.util;
+package br.com.NatanLima.certificados;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class LeitorPlanilha {
+/**
+ * Classe responsável por ler e atualizar os dados da planilha Excel.
+ */
+public class LeitorPlanilhas {
 
-    public static class Registro {
-        private final String nomeCompleto;
-        private final String email;
-        private final String nomeCurso;
-        private final String cargaHoraria;
-        private final String dataFinal;
-        private final String certificadoEnviado;
-        private final String localDaAula;
-
-        public Registro(String nomeCompleto, String email, String nomeCurso,
-                        String cargaHoraria, String dataFinal, String certificadoEnviado, String localDaAula) {
-            this.nomeCompleto = nomeCompleto;
-            this.email = email;
-            this.nomeCurso = nomeCurso;
-            this.cargaHoraria = cargaHoraria;
-            this.dataFinal = dataFinal;
-            this.certificadoEnviado = certificadoEnviado;
-            this.localDaAula = localDaAula;
-        }
-
-        public String getNomeCompleto() { return nomeCompleto; }
-        public String getEmail() { return email; }
-        public String getNomeCurso() { return nomeCurso; }
-        public String getCargaHoraria() { return cargaHoraria; }
-        public String getDataFinal() { return dataFinal; }
-        public String getCertificadoEnviado() { return certificadoEnviado; }
-        public String getLocalDaAula() { return localDaAula; }
-    }
-
-    public static List<Registro> lerPlanilha(String nomeArquivo) {
+    /**
+     * Lê os registros da planilha Excel.
+     *
+     * @param caminhoArquivo Caminho do arquivo XLSX (ex: "planilhas/dados.xlsx")
+     * @return Lista de objetos Registro com os dados da planilha.
+     */
+    public static List<Registro> lerPlanilha(String caminhoArquivo) {
         List<Registro> registros = new ArrayList<>();
 
-        try (InputStream arquivo = LeitorPlanilha.class.getResourceAsStream("/" + nomeArquivo);
-             Workbook workbook = new XSSFWorkbook(arquivo)) {
+        try (FileInputStream file = new FileInputStream(new File(caminhoArquivo));
+             Workbook workbook = new XSSFWorkbook(file)) {
 
             Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> iterator = sheet.iterator();
 
-            if (iterator.hasNext()) iterator.next(); // Ignora cabeçalho
+            // Pular cabeçalho
+            if (iterator.hasNext()) iterator.next();
 
             while (iterator.hasNext()) {
                 Row row = iterator.next();
 
-                String nomeCompleto = getCellValue(row.getCell(0));
-                String email = getCellValue(row.getCell(1));
-                String nomeCurso = getCellValue(row.getCell(2));
-                String cargaHoraria = getCellValue(row.getCell(3));
-                String dataFinal = getCellValue(row.getCell(4));
-                String certificadoEnviado = getCellValue(row.getCell(5));
-                String localDaAula = getCellValue(row.getCell(6));
+                Registro r = new Registro();
+                r.setNomeCompleto(getValorCelula(row.getCell(0)));
+                r.setEmail(getValorCelula(row.getCell(1)));
+                r.setNomeDoCurso(getValorCelula(row.getCell(2)));
+                r.setCargaHoraria(getValorCelula(row.getCell(3)));
+                r.setDataFinal(getValorCelula(row.getCell(4)));
+                r.setLocalDaAula(getValorCelula(row.getCell(5)));
+                r.setCertificadoEnviado(getValorCelula(row.getCell(6)));
 
-                registros.add(new Registro(
-                        nomeCompleto, email, nomeCurso, cargaHoraria, dataFinal, certificadoEnviado, localDaAula
-                ));
+                registros.add(r);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
+            System.err.println("❌ Erro ao ler a planilha: " + e.getMessage());
         }
 
         return registros;
     }
 
-    private static String getCellValue(Cell cell) {
-        if (cell == null) return "";
-        if (cell.getCellType() == CellType.NUMERIC) {
-            if (DateUtil.isCellDateFormatted(cell)) {
-                return cell.getLocalDateTimeCellValue().toLocalDate().toString();
-            } else {
-                return String.valueOf((int) cell.getNumericCellValue());
+    /**
+     * Atualiza o status de envio na planilha Excel.
+     *
+     * @param caminhoArquivo Caminho da planilha (ex: "planilhas/dados.xlsx")
+     * @param registro       Objeto Registro com o nome e status atualizado
+     */
+    public static void atualizarStatusEnvio(String caminhoArquivo, Registro registro) {
+        try (FileInputStream file = new FileInputStream(new File(caminhoArquivo));
+             Workbook workbook = new XSSFWorkbook(file)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+
+            // Percorrer linhas até encontrar o aluno
+            for (Row row : sheet) {
+                Cell cellNome = row.getCell(0);
+                if (cellNome != null && getValorCelula(cellNome).equalsIgnoreCase(registro.getNomeCompleto())) {
+                    Cell cellStatus = row.getCell(6); // Coluna "Certificado Enviado"
+                    if (cellStatus == null) cellStatus = row.createCell(6);
+                    cellStatus.setCellValue(registro.getCertificadoEnviado());
+                    break;
+                }
             }
+
+            // Salvar alterações
+            try (FileOutputStream out = new FileOutputStream(caminhoArquivo)) {
+                workbook.write(out);
+            }
+
+            System.out.println("📝 Planilha atualizada para: " + registro.getNomeCompleto());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("❌ Erro ao atualizar a planilha: " + e.getMessage());
         }
-        return cell.getStringCellValue();
+    }
+
+    /**
+     * Método auxiliar para pegar o valor da célula como String.
+     */
+    private static String getValorCelula(Cell cell) {
+        if (cell == null) return "";
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue().trim();
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                } else {
+                    return String.valueOf((long) cell.getNumericCellValue());
+                }
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
+            default:
+                return "";
+        }
     }
 }

@@ -1,28 +1,20 @@
 package br.com.NatanLima.certificados;
 
-import com.itextpdf.html2pdf.ConverterProperties;
-import com.itextpdf.html2pdf.HtmlConverter;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-
-import java.io.ByteArrayInputStream;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 
 public class ConversorHtmlParaPdf {
 
-    public static void converter(String htmlContent, String caminhoSaida) {
-        try (InputStream inputStream = new ByteArrayInputStream(htmlContent.getBytes(StandardCharsets.UTF_8));
-             PdfWriter writer = new PdfWriter(new FileOutputStream(caminhoSaida));
-             PdfDocument pdfDoc = new PdfDocument(writer)) {
-
-            ConverterProperties props = new ConverterProperties();
-            HtmlConverter.convertToPdf(inputStream, pdfDoc, props);
-            System.out.println("PDF gerado: " + caminhoSaida);
-
+    public static void converter(String html, String caminhoSaidaPdf) throws IOException {
+        try (FileOutputStream os = new FileOutputStream(new File(caminhoSaidaPdf))) {
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.withHtmlContent(html, null);
+            builder.toStream(os);
+            builder.run();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new IOException("Erro ao gerar PDF: " + e.getMessage(), e);
         }
     }
 }

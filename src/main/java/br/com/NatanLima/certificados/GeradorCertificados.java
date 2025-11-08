@@ -1,35 +1,94 @@
 package br.com.NatanLima.certificados;
 
-import br.com.NatanLima.certificados.util.LeitorPlanilha;
-
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Scanner;
 
+/**
+ * Classe principal que coordena a leitura da planilha, geração dos certificados e envio por e-mail.
+ */
 public class GeradorCertificados {
 
-    public void gerarCertificados() {
-        List<LeitorPlanilha.Registro> registros = LeitorPlanilha.lerPlanilha("cursos.xlsx");
+    // Caminho da planilha
+    private static final String CAMINHO_PLANILHA = "planilhas/dados.xlsx";
 
-        for (LeitorPlanilha.Registro r : registros) {
-            try (InputStream htmlStream = getClass().getResourceAsStream("/modelo-certificado.html")) {
-                assert htmlStream != null;
-                String htmlTemplate = new Scanner(htmlStream, StandardCharsets.UTF_8).useDelimiter("\\A").next();
+    // Caminho da pasta onde os certificados gerados serão salvos
+    private static final String PASTA_CERTIFICADOS = "certificados/";
 
-                String htmlFinal = htmlTemplate
-                        .replace("{{NOME_COMPLETO}}", r.getNomeCompleto())
-                        .replace("{{CURSO}}", r.getNomeCurso())
-                        .replace("{{CARGA_HORARIA}}", r.getCargaHoraria())
-                        .replace("{{DATA_FINAL}}", r.getDataFinal())
-                        .replace("{{LOCAL_AULA}}", r.getLocalDaAula());
+    public static void main(String[] args) {
+        try {
+            // 1️⃣ Ler todos os registros da planilha
+            List<Registro> registros = LeitorPlanilhas.lerPlanilha(CAMINHO_PLANILHA);
 
-                String nomeArquivo = "certificados/" + r.getNomeCompleto().replace(" ", "_") + ".pdf";
-                ConversorHtmlParaPdf.converter(htmlFinal, nomeArquivo);
+            // 2️⃣ Formato da data que vem na planilha
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            } catch (Exception e) {
-                e.printStackTrace();
+            // 3️⃣ Iterar pelos alunos
+            for (Registro registro : registros) {
+                if (registro.getCertificadoEnviado() != null && !registro.getCertificadoEnviado().isBlank()) {
+                    System.out.println("⏩ Certificado já enviado para: " + registro.getNomeCompleto());
+                    continue;
+                }
+
+                LocalDate dataFinalCurso = LocalDate.parse(registro.getDataFinal(), formatter);
+                LocalDate hoje = LocalDate.now();
+
+                // Só envia se a data final for hoje ou anterior
+                if (dataFinalCurso.isAfter(hoje)) {
+                    System.out.println("📅 Curso ainda não finalizado para: " + registro.getNomeCompleto());
+                    continue;
+                }
+
+                // 4️⃣ Gerar HTML do certificado substituindo variáveis
+                String html = gerarHtmlCertificado(registro);
+
+                // 5️⃣ Gerar o PDF
+                String caminhoCertificado = PASTA_CERTIFICADOS + registro.getNomeCompleto().replace(" ", "_") + ".pdf";
+                ConversorHtmlParaPdf.converter(html, caminhoCertificado);
+
+                // 6️⃣ Enviar por e-mail
+                String assunto = "Certificado do Curso - " + registro.getNomeDoCurso();
+                String corpoEmail = "Olá " + registro.getNomeCompleto() + ",\n\n"
+                        + "Segue em anexo o seu certificado do curso \"" + registro.getNomeDoCurso() + "\".\n\n"
+                        + "Atenciosamente,\nEquipe de Certificação";
+
+                ServicoEmail.enviarEmailComAnexo(
+                        registro.getEmail(),
+                        assunto,
+                        corpoEmail,
+                        caminhoCertificado
+                );
+
+                // 7️⃣ Atualizar planilha
+                String dataEnvio = LocalDate.now().format(formatter);
+                registro.setCertificadoEnviado("Enviado na data " + dataEnvio);
+                LeitorPlanilhas.atualizarStatusEnvio(CAMINHO_PLANILHA, registro);
+
+                System.out.println("✅ Certificado enviado para " + registro.getNomeCompleto());
             }
+
+            System.out.println("\n🎉 Processo concluído com sucesso!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("❌ Erro ao gerar ou enviar certificados: " + e.getMessage());
         }
+    }
+
+    /**
+     * Gera o HTML do certificado substituindo variáveis.
+     */
+    private static String gerarHtmlCertificado(Registro r) throws Exception {
+        File modeloHtml = new File("src/main/resources/modelo-certificado.html");
+        String html = java.nio.file.Files.readString(modeloHtml.toPath());
+
+        html = html.replace("{{NOME_COMPLETO}}", r.getNomeCompleto());
+        html = html.replace("{{CURSO}}", r.getNomeDoCurso());
+        html = html.replace("{{CARGA_HORARIA}}", r.getCargaHoraria());
+        html = html.replace("{{DATA_FINAL}}", r.getDataFinal());
+        html = html.replace("{{LOCAL}}", r.getLocalDaAula());
+
+        return html;
     }
 }

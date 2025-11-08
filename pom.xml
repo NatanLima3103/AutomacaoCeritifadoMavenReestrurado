@@ -1,55 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>br.com.NatanLima</groupId>
-    <artifactId>certificados</artifactId>
+    <artifactId>AutomacaoCertificadoMaven</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
+
+    <name>AutomacaoCertificadoMaven</name>
+    <description>Projeto para automação de certificados - geração de PDFs e envio por e-mail</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
-        <!-- Leitura de planilhas -->
+        <!-- ===================== -->
+        <!-- 📘 Leitura de Planilhas Excel -->
+        <!-- ===================== -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.3.0</version>
         </dependency>
 
-        <!-- Conversão HTML → PDF -->
+        <!-- ===================== -->
+        <!-- 📄 Conversão HTML -> PDF -->
+        <!-- ===================== -->
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>1.0.10</version>
+        </dependency>
+
+        <!-- ===================== -->
+        <!-- ✉️ Envio de E-mails -->
+        <!-- ===================== -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <!-- ===================== -->
+        <!-- 🧾 Geração de PDFs (opcional) -->
+        <!-- ===================== -->
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>html2pdf</artifactId>
             <version>5.0.4</version>
         </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>kernel</artifactId>
+            <version>8.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>layout</artifactId>
+            <version>8.0.4</version>
+        </dependency>
 
-        <!-- Logging -->
+        <!-- ===================== -->
+        <!-- 🪵 Logging simples -->
+        <!-- ===================== -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.13</version>
+        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.13</version>
         </dependency>
 
-        <!-- Utilitários -->
+        <!-- ===================== -->
+        <!-- 🔧 Utilidades extras -->
+        <!-- ===================== -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.11.0</version>
         </dependency>
+
     </dependencies>
 
     <build>
         <plugins>
+            <!-- 🔨 Plugin de compilação padrão -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.10.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
+            <!-- 🏗️ Plugin para criar JAR executável -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>br.com.NatanLima.certificados.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>
