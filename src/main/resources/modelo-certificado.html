@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificado</title>
+    <style>
+        body {
+            /* Usando Times New Roman como você pediu */
+            font-family: "Times New Roman", Times, serif; 
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0; /* Cor de fundo cinza só para vermos o papel */
+        }
+
+        /* * O 'container' é o seu "papel".
+         * Ajuste a largura (width) e altura (height) para
+         * terem a MESMA PROPORÇÃO da sua imagem 'fundo_certificado.png'.
+         * Ex: Se sua imagem tem 1200px por 800px, use esses valores.
+         * (Estes valores são aproximados para um A4 paisagem)
+        */
+        .certificado-container {
+            width: 1122px;  /* Ajuste a largura (ex: A4 Paisagem 1122px) */
+            height: 794px; /* Ajuste a altura (ex: A4 Paisagem 794px) */
+            
+            /* Isso é crucial para o posicionamento */
+            position: relative; 
+            
+            /* --- ESTA É A PARTE MÁGICA --- */
+            /* Ele procura o fundo ('fundo_certificado.png') na mesma pasta onde este HTML está */
+            background-image: url('fundo_certificado.png'); 
+            background-size: 100% 100%; /* Faz a imagem caber exatamente no container */
+            background-repeat: no-repeat;
+        }
+
+        /* * PASSO DE AJUSTE (O "AJUSTE FINO"):
+         * Posicione os seus textos flutuantes.
+         * Altere os pixels (px) de 'top' e 'left' 
+         * para alinhar o texto com as linhas do seu fundo.
+         * (Estes valores são baseados no seu template.docx original)
+        */
+        
+        .nome-palestrante {
+            position: absolute;
+            top: 450px;     /* Distância do topo */
+            left: 100px;    /* Distância da esquerda */
+            right: 100px;   /* Distância da direita (ajuda a centralizar) */
+            
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #000; /* Cor da fonte */
+        }
+        
+        .texto-principal {
+            position: absolute;
+            top: 540px;     /* Distância do topo */
+            left: 100px;
+            right: 100px;
+
+            text-align: center;
+            font-size: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .data-curso {
+             position: absolute;
+             bottom: 120px;  /* Distância do FUNDO */
+             left: 100px;
+             right: 100px;
+
+             text-align: center;
+             font-size: 18px;
+             color: #333;
+        }
+
+    </style>
+</head>
+<body>
+<div class="certificado-container">
+
+    <div class="nome-palestrante">
+        ${NOME_PALESTRANTE}
+    </div>
+
+    <div class="texto-principal">
+        ministrou o curso **"${NOME_CURSO}"**
+        na **${LOCAL_AULA}**,
+        com carga horária de **${CARGA_HORARIA}**.
+    </div>
+
+    <div class="data-curso">
+        Curitiba, ${DATA_CURSO}
+    </div>
+
+</div>
+</body>
+</html>

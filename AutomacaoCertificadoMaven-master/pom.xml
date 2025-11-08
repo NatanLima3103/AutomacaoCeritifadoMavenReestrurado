@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 1. Informações Básicas do seu Projeto -->
+    <groupId>br.com.oabpr</groupId>
+    <artifactId>AutomacaoCertificadosMaven</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <!-- Define a versão do Java que estamos usando -->
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!-- 2. A "LISTA DE COMPRAS" DE DEPENDÊNCIAS -->
+    <!-- O Maven vai ler isso e baixar todos os "ajudantes" necessários -->
+    <dependencies>
+
+        <!-- Dependência para ler Excel (POI) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+
+        <!-- Dependência para Converter HTML -> PDF (Docx4j) -->
+        <!-- Esta é a mágica: ela vai baixar TODOS os ajudantes (mime4j, fop, batik, etc.) -->
+        <dependency>
+            <groupId>org.docx4j</groupId>
+            <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
+            <version>11.5.6</version>
+        </dependency>
+
+        <!-- Dependência para o E-mail (Jakarta Mail) -->
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>jakarta.mail</artifactId>
+            <version>2.0.3</version>
+        </dependency>
+
+        <!-- Dependência de Ativação (Ajudante do E-mail) -->
+        <dependency>
+            <groupId>jakarta.activation</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+            <version>2.1.2</version>
+        </dependency>
+
+        <!-- Dependências para Corrigir os AVISOS de Log (SLF4J e Log4j) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.20.0</version>
+        </dependency>
+
+    </dependencies>
+
+</project>
