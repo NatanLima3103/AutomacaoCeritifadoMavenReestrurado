@@ -16,12 +16,11 @@ public class LeitorPlanilhas {
     /**
      * Lê os registros da planilha Excel.
      *
-     * @param caminhoArquivo Caminho do arquivo XLSX (ex: "planilhas/dados.xlsx")
+     * @param caminhoArquivo Caminho do arquivo XLSX (ex: "planilhas/cursos.xlsx")
      * @return Lista de objetos Registro com os dados da planilha.
      */
     public static List<Registro> lerPlanilha(String caminhoArquivo) {
         List<Registro> registros = new ArrayList<>();
-
         try (FileInputStream file = new FileInputStream(new File(caminhoArquivo));
              Workbook workbook = new XSSFWorkbook(file)) {
 
@@ -33,15 +32,16 @@ public class LeitorPlanilhas {
 
             while (iterator.hasNext()) {
                 Row row = iterator.next();
-
                 Registro r = new Registro();
-                r.setNomeCompleto(getValorCelula(row.getCell(0)));
-                r.setEmail(getValorCelula(row.getCell(1)));
-                r.setNomeDoCurso(getValorCelula(row.getCell(2)));
-                r.setCargaHoraria(getValorCelula(row.getCell(3)));
-                r.setDataFinal(getValorCelula(row.getCell(4)));
-                r.setLocalDaAula(getValorCelula(row.getCell(5)));
-                r.setCertificadoEnviado(getValorCelula(row.getCell(6)));
+                r.setNomeCompleto(getValorCelula(row.getCell(0)));         // Coluna A
+                r.setEmail(getValorCelula(row.getCell(1)));                // Coluna B
+                r.setNomeDoCurso(getValorCelula(row.getCell(2)));          // Coluna C
+                r.setCargaHoraria(getValorCelula(row.getCell(3)));         // Coluna D
+                r.setDataFinal(getValorCelula(row.getCell(4)));            // Coluna E
+
+                // ✅ CORREÇÃO AQUI (Baseado na sua imagem da planilha)
+                r.setCertificadoEnviado(getValorCelula(row.getCell(5)));   // Coluna F
+                r.setLocalDaAula(getValorCelula(row.getCell(6)));          // Coluna G
 
                 registros.add(r);
             }
@@ -57,7 +57,7 @@ public class LeitorPlanilhas {
     /**
      * Atualiza o status de envio na planilha Excel.
      *
-     * @param caminhoArquivo Caminho da planilha (ex: "planilhas/dados.xlsx")
+     * @param caminhoArquivo Caminho da planilha (ex: "planilhas/cursos.xlsx")
      * @param registro       Objeto Registro com o nome e status atualizado
      */
     public static void atualizarStatusEnvio(String caminhoArquivo, Registro registro) {
@@ -70,8 +70,12 @@ public class LeitorPlanilhas {
             for (Row row : sheet) {
                 Cell cellNome = row.getCell(0);
                 if (cellNome != null && getValorCelula(cellNome).equalsIgnoreCase(registro.getNomeCompleto())) {
-                    Cell cellStatus = row.getCell(6); // Coluna "Certificado Enviado"
-                    if (cellStatus == null) cellStatus = row.createCell(6);
+
+                    // ✅ CORREÇÃO AQUI (Baseado na sua imagem da planilha)
+                    // Deve escrever na Coluna F (índice 5)
+                    Cell cellStatus = row.getCell(5); // Coluna "Certificado Enviado"
+                    if (cellStatus == null) cellStatus = row.createCell(5);
+
                     cellStatus.setCellValue(registro.getCertificadoEnviado());
                     break;
                 }
@@ -100,7 +104,9 @@ public class LeitorPlanilhas {
                 return cell.getStringCellValue().trim();
             case NUMERIC:
                 if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue().toString();
+                    // ✅ MELHORIA: Formatar data como dd/MM/yyyy
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+                    return sdf.format(cell.getDateCellValue());
                 } else {
                     return String.valueOf((long) cell.getNumericCellValue());
                 }

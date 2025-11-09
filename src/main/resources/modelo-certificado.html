@@ -1,80 +1,84 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Certificado</title>
     <style>
+
+        /* Força o tamanho da PÁGINA para ser Paisagem (1122x794px) */
+        @page {
+            size: 1122px 794px;
+            margin: 0;
+        }
+
         body {
-            /* Usando Times New Roman como você pediu */
-            font-family: "Times New Roman", Times, serif; 
+            font-family: "Times New Roman", Times, serif;
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #f0f0f0; /* Cor de fundo cinza só para vermos o papel */
+            background-color: #f0f0f0;
         }
 
-        /* * O 'container' é o seu "papel".
-         * Ajuste a largura (width) e altura (height) para
-         * terem a MESMA PROPORÇÃO da sua imagem 'fundo_certificado.png'.
-         * Ex: Se sua imagem tem 1200px por 800px, use esses valores.
-         * (Estes valores são aproximados para um A4 paisagem)
-        */
         .certificado-container {
-            width: 1122px;  /* Ajuste a largura (ex: A4 Paisagem 1122px) */
-            height: 794px; /* Ajuste a altura (ex: A4 Paisagem 794px) */
-            
-            /* Isso é crucial para o posicionamento */
-            position: relative; 
-            
-            /* --- ESTA É A PARTE MÁGICA --- */
-            /* Ele procura o fundo ('fundo_certificado.png') na mesma pasta onde este HTML está */
-            background-image: url('fundo_certificado.png'); 
-            background-size: 100% 100%; /* Faz a imagem caber exatamente no container */
+            width: 1122px;
+            height: 794px;
+            position: relative;
+            background-image: url('fundo_certificado.png');
+            background-size: 100% 100%;
             background-repeat: no-repeat;
+
+            text-align: center;
+            color: #000;
         }
 
-        /* * PASSO DE AJUSTE (O "AJUSTE FINO"):
-         * Posicione os seus textos flutuantes.
-         * Altere os pixels (px) de 'top' e 'left' 
-         * para alinhar o texto com as linhas do seu fundo.
-         * (Estes valores são baseados no seu template.docx original)
-        */
-        
-        .nome-palestrante {
+        /* * =============================================
+         * O "AJUSTE FINO"
+         * USE O TRUQUE DO F12 (INSPECIONAR) NO NAVEGADOR
+         * PARA MUDAR OS PIXELS DE "top:" E "bottom:"
+         * =============================================
+         */
+
+        .titulo-certificado {
             position: absolute;
-            top: 450px;     /* Distância do topo */
-            left: 100px;    /* Distância da esquerda */
-            right: 100px;   /* Distância da direita (ajuda a centralizar) */
-            
-            text-align: center;
-            font-size: 32px;
-            font-weight: bold;
-            color: #000; /* Cor da fonte */
-        }
-        
-        .texto-principal {
-            position: absolute;
-            top: 540px;     /* Distância do topo */
+            top: 270px;     /* CHUTE: Mude este valor */
             left: 100px;
             right: 100px;
+            font-size: 36px;
+            font-weight: bold;
+        }
 
-            text-align: center;
+        .texto-intro {
+            position: absolute;
+            top: 340px;     /* CHUTE: Mude este valor */
+            left: 150px;
+            right: 150px;
             font-size: 20px;
             line-height: 1.6;
-            color: #333;
         }
-        
+
+        .nome-palestrante {
+            position: absolute;
+            top: 430px;     /* CHUTE: Mude este valor */
+            left: 100px;
+            right: 100px;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .texto-principal {
+            position: absolute;
+            top: 500px;     /* CHUTE: Mude este valor */
+            left: 150px;
+            right: 150px;
+            font-size: 20px;
+            line-height: 1.6;
+        }
+
         .data-curso {
              position: absolute;
-             bottom: 120px;  /* Distância do FUNDO */
+             bottom: 140px;  /* CHUTE: Mude este valor */
              left: 100px;
              right: 100px;
-
-             text-align: center;
              font-size: 18px;
-             color: #333;
         }
 
     </style>
@@ -82,18 +86,26 @@
 <body>
 <div class="certificado-container">
 
+    <div class="titulo-certificado">
+        CERTIFICADO
+    </div>
+
+    <div class="texto-intro">
+        A Ordem dos Advogados do Brasil – Seção Paraná, através da Escola Superior de Advocacia da OAB/PR, certifica que
+    </div>
+
     <div class="nome-palestrante">
         ${NOME_PALESTRANTE}
     </div>
 
     <div class="texto-principal">
-        ministrou o curso **"${NOME_CURSO}"**
-        na **${LOCAL_AULA}**,
-        com carga horária de **${CARGA_HORARIA}**.
+        Ministrou o curso "${NOME_CURSO}"
+        na ${LOCAL_AULA},
+        com carga horária de ${CARGA_HORARIA}.
     </div>
 
     <div class="data-curso">
-        Curitiba, ${DATA_CURSO}
+        Curitiba, ${DATA_CURSO}.
     </div>
 
 </div>

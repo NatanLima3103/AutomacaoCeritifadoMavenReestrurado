@@ -10,44 +10,47 @@ import java.util.List;
  */
 public class GeradorCertificados {
 
-    // Caminho da planilha
-    private static final String CAMINHO_PLANILHA = "planilhas/dados.xlsx";
-
-    // Caminho da pasta onde os certificados gerados serão salvos
+    private static final String CAMINHO_PLANILHA = "planilhas/cursos.xlsx";
     private static final String PASTA_CERTIFICADOS = "certificados/";
 
     public static void main(String[] args) {
         try {
-            // 1️⃣ Ler todos os registros da planilha
             List<Registro> registros = LeitorPlanilhas.lerPlanilha(CAMINHO_PLANILHA);
-
-            // 2️⃣ Formato da data que vem na planilha
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            // 3️⃣ Iterar pelos alunos
             for (Registro registro : registros) {
+
+                // 1. Pula se já foi enviado
                 if (registro.getCertificadoEnviado() != null && !registro.getCertificadoEnviado().isBlank()) {
                     System.out.println("⏩ Certificado já enviado para: " + registro.getNomeCompleto());
+                    continue;
+                }
+
+                // ✅ CORREÇÃO 1: Pular linhas em branco ou incompletas
+                // Isso impede o crash de 'DateTimeParseException' em linhas vazias
+                if (registro.getNomeCompleto() == null || registro.getNomeCompleto().isBlank() ||
+                        registro.getDataFinal() == null || registro.getDataFinal().isBlank()) {
+                    // Não é um erro, apenas pula a linha em branco no final da planilha
                     continue;
                 }
 
                 LocalDate dataFinalCurso = LocalDate.parse(registro.getDataFinal(), formatter);
                 LocalDate hoje = LocalDate.now();
 
-                // Só envia se a data final for hoje ou anterior
+                // 2. Só envia se a data final for hoje ou anterior
                 if (dataFinalCurso.isAfter(hoje)) {
                     System.out.println("📅 Curso ainda não finalizado para: " + registro.getNomeCompleto());
                     continue;
                 }
 
-                // 4️⃣ Gerar HTML do certificado substituindo variáveis
+                // 3. Gerar HTML
                 String html = gerarHtmlCertificado(registro);
 
-                // 5️⃣ Gerar o PDF
+                // 4. Gerar o PDF
                 String caminhoCertificado = PASTA_CERTIFICADOS + registro.getNomeCompleto().replace(" ", "_") + ".pdf";
                 ConversorHtmlParaPdf.converter(html, caminhoCertificado);
 
-                // 6️⃣ Enviar por e-mail
+                // 5. Enviar por e-mail
                 String assunto = "Certificado do Curso - " + registro.getNomeDoCurso();
                 String corpoEmail = "Olá " + registro.getNomeCompleto() + ",\n\n"
                         + "Segue em anexo o seu certificado do curso \"" + registro.getNomeDoCurso() + "\".\n\n"
@@ -60,7 +63,7 @@ public class GeradorCertificados {
                         caminhoCertificado
                 );
 
-                // 7️⃣ Atualizar planilha
+                // 6. Atualizar planilha
                 String dataEnvio = LocalDate.now().format(formatter);
                 registro.setCertificadoEnviado("Enviado na data " + dataEnvio);
                 LeitorPlanilhas.atualizarStatusEnvio(CAMINHO_PLANILHA, registro);
@@ -80,15 +83,24 @@ public class GeradorCertificados {
      * Gera o HTML do certificado substituindo variáveis.
      */
     private static String gerarHtmlCertificado(Registro r) throws Exception {
-        File modeloHtml = new File("src/main/resources/modelo-certificado.html");
-        String html = java.nio.file.Files.readString(modeloHtml.toPath());
 
-        html = html.replace("{{NOME_COMPLETO}}", r.getNomeCompleto());
-        html = html.replace("{{CURSO}}", r.getNomeDoCurso());
-        html = html.replace("{{CARGA_HORARIA}}", r.getCargaHoraria());
-        html = html.replace("{{DATA_FINAL}}", r.getDataFinal());
-        html = html.replace("{{LOCAL}}", r.getLocalDaAula());
+        try (java.io.InputStream is = GeradorCertificados.class
+                .getClassLoader()
+                .getResourceAsStream("modelo-certificado.html")) {
 
-        return html;
+            if (is == null) {
+                throw new Exception("ERRO: Arquivo 'modelo-certificado.html' não encontrado em /src/main/resources/");
+            }
+
+            String html = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+
+            html = html.replace("${NOME_PALESTRANTE}", r.getNomeCompleto());
+            html = html.replace("${NOME_CURSO}", r.getNomeDoCurso());
+            html = html.replace("${CARGA_HORARIA}", r.getCargaHoraria());
+            html = html.replace("${DATA_CURSO}", r.getDataFinal());
+            html = html.replace("${LOCAL_AULA}", r.getLocalDaAula());
+
+            return html;
+        }
     }
 }
