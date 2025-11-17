@@ -10,17 +10,13 @@ import java.util.List;
 
 /**
  * Classe responsável por ler e atualizar os dados da planilha Excel.
+ * ESTA É A VERSÃO FINAL CORRIGIDA.
  */
 public class LeitorPlanilhas {
 
-    /**
-     * Lê os registros da planilha Excel.
-     *
-     * @param caminhoArquivo Caminho do arquivo XLSX (ex: "planilhas/cursos.xlsx")
-     * @return Lista de objetos Registro com os dados da planilha.
-     */
     public static List<Registro> lerPlanilha(String caminhoArquivo) {
         List<Registro> registros = new ArrayList<>();
+        // Usamos um try-with-resources para garantir que o ficheiro é fechado após a leitura
         try (FileInputStream file = new FileInputStream(new File(caminhoArquivo));
              Workbook workbook = new XSSFWorkbook(file)) {
 
@@ -33,87 +29,114 @@ public class LeitorPlanilhas {
             while (iterator.hasNext()) {
                 Row row = iterator.next();
                 Registro r = new Registro();
+
+                // Os valores são lidos e limpos pelo getValorCelula()
                 r.setNomeCompleto(getValorCelula(row.getCell(0)));         // Coluna A
                 r.setEmail(getValorCelula(row.getCell(1)));                // Coluna B
                 r.setNomeDoCurso(getValorCelula(row.getCell(2)));          // Coluna C
                 r.setCargaHoraria(getValorCelula(row.getCell(3)));         // Coluna D
                 r.setDataFinal(getValorCelula(row.getCell(4)));            // Coluna E
+                r.setLocalDaAula(getValorCelula(row.getCell(5)));          // Coluna F
+                r.setCertificadoEnviado(getValorCelula(row.getCell(6)));   // Coluna G
 
-                // ✅ CORREÇÃO AQUI (Baseado na sua imagem da planilha)
-                r.setCertificadoEnviado(getValorCelula(row.getCell(5)));   // Coluna F
-                r.setLocalDaAula(getValorCelula(row.getCell(6)));          // Coluna G
-
+                r.setLinha(row.getRowNum()); // Guarda o número da linha
                 registros.add(r);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("❌ Erro ao ler a planilha: " + e.getMessage());
+            System.err.println("❌ Erro ao LER a planilha: " + e.getMessage());
         }
-
         return registros;
     }
 
     /**
-     * Atualiza o status de envio na planilha Excel.
-     *
-     * @param caminhoArquivo Caminho da planilha (ex: "planilhas/cursos.xlsx")
-     * @param registro       Objeto Registro com o nome e status atualizado
+     * Atualiza a coluna "Certificado Enviado" (G) para um registro específico.
+     * ESTA É A VERSÃO FINAL CORRIGIDA (lê primeiro, depois escreve).
      */
     public static void atualizarStatusEnvio(String caminhoArquivo, Registro registro) {
-        try (FileInputStream file = new FileInputStream(new File(caminhoArquivo));
-             Workbook workbook = new XSSFWorkbook(file)) {
+        File file = new File(caminhoArquivo);
+        Workbook workbook;
 
+        // --- PASSO 1: LER O FICHEIRO ---
+        try (FileInputStream in = new FileInputStream(file)) {
+            workbook = new XSSFWorkbook(in);
+        } catch (Exception e) {
+            System.err.println("❌ Erro ao LER a planilha para atualização: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        }
+
+        // --- PASSO 2: MODIFICAR NA MEMÓRIA ---
+        try {
             Sheet sheet = workbook.getSheetAt(0);
-
-            // Percorrer linhas até encontrar o aluno
-            for (Row row : sheet) {
-                Cell cellNome = row.getCell(0);
-                if (cellNome != null && getValorCelula(cellNome).equalsIgnoreCase(registro.getNomeCompleto())) {
-
-                    // ✅ CORREÇÃO AQUI (Baseado na sua imagem da planilha)
-                    // Deve escrever na Coluna F (índice 5)
-                    Cell cellStatus = row.getCell(5); // Coluna "Certificado Enviado"
-                    if (cellStatus == null) cellStatus = row.createCell(5);
-
-                    cellStatus.setCellValue(registro.getCertificadoEnviado());
-                    break;
-                }
+            Row row = sheet.getRow(registro.getLinha());
+            if (row == null) {
+                row = sheet.createRow(registro.getLinha());
             }
-
-            // Salvar alterações
-            try (FileOutputStream out = new FileOutputStream(caminhoArquivo)) {
-                workbook.write(out);
-            }
-
-            System.out.println("📝 Planilha atualizada para: " + registro.getNomeCompleto());
+            Cell cell = row.getCell(6, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+            cell.setCellValue(registro.getCertificadoEnviado());
 
         } catch (Exception e) {
+            System.err.println("❌ Erro ao MODIFICAR a planilha na memória: " + e.getMessage());
             e.printStackTrace();
-            System.err.println("❌ Erro ao atualizar a planilha: " + e.getMessage());
+            return;
         }
+
+        // --- PASSO 3: ESCREVER AS ALTERAÇÕES ---
+        try (FileOutputStream out = new FileOutputStream(file)) {
+            workbook.write(out);
+        } catch (Exception e) {
+            System.err.println("❌ Erro ao ESCREVER na planilha. O ficheiro está aberto no Excel?");
+            e.printStackTrace();
+            return;
+        } finally {
+            try {
+                workbook.close();
+            } catch (IOException e) { /* ignora */ }
+        }
+
+        System.out.println("📝 Planilha atualizada para: " + registro.getNomeCompleto());
     }
+
 
     /**
      * Método auxiliar para pegar o valor da célula como String.
+     * ESTA É A VERSÃO FINAL CORRIGIDA (faz .trim() em tudo).
      */
     private static String getValorCelula(Cell cell) {
         if (cell == null) return "";
+
         switch (cell.getCellType()) {
             case STRING:
-                return cell.getStringCellValue().trim();
+                return cell.getStringCellValue().trim(); // A CORREÇÃO PRINCIPAL
+
             case NUMERIC:
                 if (DateUtil.isCellDateFormatted(cell)) {
-                    // ✅ MELHORIA: Formatar data como dd/MM/yyyy
                     java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
                     return sdf.format(cell.getDateCellValue());
                 } else {
-                    return String.valueOf((long) cell.getNumericCellValue());
+                    long num = (long) cell.getNumericCellValue();
+                    return String.valueOf(num);
                 }
+
             case BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
+
             case FORMULA:
-                return cell.getCellFormula();
+                try {
+                    return cell.getStringCellValue().trim();
+                } catch (Exception e) {
+                    try {
+                        long num = (long) cell.getNumericCellValue();
+                        return String.valueOf(num);
+                    } catch (Exception e2) {
+                        return cell.getCellFormula().trim();
+                    }
+                }
+
+            case BLANK:
+                return "";
+
             default:
                 return "";
         }

@@ -7,26 +7,26 @@ import java.util.Properties;
 
 /**
  * Classe responsável por enviar e-mails com anexo (certificados em PDF).
+ * ESTA É A VERSÃO FINAL CORRIGIDA.
  */
 public class ServicoEmail {
 
     /**
      * Envia um e-mail com anexo (PDF do certificado).
-     *
-     * @param destinatario E-mail de destino
-     * @param assunto      Assunto do e-mail
-     * @param corpoEmail   Texto do corpo
-     * @param caminhoAnexo Caminho do arquivo PDF a ser anexado
+     * @throws Exception // <-- ALTERAÇÃO CHAVE: Avisa que este método pode lançar erros
      */
-    public static void enviarEmailComAnexo(String destinatario, String assunto, String corpoEmail, String caminhoAnexo) {
+    public static void enviarEmailComAnexo(String destinatario, String assunto, String corpoEmail, String caminhoAnexo)
+            throws Exception // <-- ALTERAÇÃO CHAVE
+    {
         // 📧 Pegando as credenciais do ambiente para segurança
         String EMAIL_REMETENTE = System.getenv("CERTIFICADO_EMAIL");
         String SENHA_REMETENTE = System.getenv("CERTIFICADO_SENHA");
 
         if (EMAIL_REMETENTE == null || SENHA_REMETENTE == null) {
             System.err.println("❌ ERRO: Variáveis de ambiente CERTIFICADO_EMAIL e CERTIFICADO_SENHA não configuradas!");
-            System.err.println("→ Configure-as antes de rodar o sistema.");
-            return;
+            System.err.println("→ Configure-as no 'Run -> Edit Configurations...' do seu IntelliJ.");
+            // Lança uma exceção para parar o processo
+            throw new Exception("Variáveis de ambiente não configuradas."); // <-- ALTERAÇÃO CHAVE
         }
 
         try {
@@ -36,19 +36,19 @@ public class ServicoEmail {
             props.put("mail.smtp.starttls.enable", "true");
             props.put("mail.smtp.host", "smtp.gmail.com");
             props.put("mail.smtp.port", "587");
-            props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
-            props.put("mail.debug", "true"); // <-- Mostra o que o servidor responde
+            props.put("mail.debug", "true");
 
-            // Cria sessão autenticada
+            // Autenticação
             Session session = Session.getInstance(props, new Authenticator() {
                 protected PasswordAuthentication getPasswordAuthentication() {
                     return new PasswordAuthentication(EMAIL_REMETENTE, SENHA_REMETENTE);
                 }
             });
+            session.setDebug(true);
 
-            // Monta o e-mail
+            // Cria a mensagem
             Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(EMAIL_REMETENTE, "Sistema de Certificados"));
+            message.setFrom(new InternetAddress(EMAIL_REMETENTE, "Emissor de Certificados"));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(destinatario));
             message.setSubject(assunto);
 
@@ -61,7 +61,7 @@ public class ServicoEmail {
             File arquivo = new File(caminhoAnexo);
             if (!arquivo.exists()) {
                 System.err.println("⚠️ Arquivo não encontrado: " + caminhoAnexo);
-                return;
+                throw new Exception("Arquivo PDF não encontrado: " + caminhoAnexo); // <-- ALTERAÇÃO CHAVE
             }
             anexo.attachFile(arquivo);
 
@@ -78,11 +78,14 @@ public class ServicoEmail {
 
         } catch (AuthenticationFailedException e) {
             System.err.println("❌ Falha de autenticação: verifique o e-mail e a senha de app!");
+            throw e; // <-- ALTERAÇÃO CHAVE: Relança o erro
         } catch (SendFailedException e) {
             System.err.println("❌ Falha ao enviar o e-mail. Verifique o endereço do destinatário: " + destinatario);
+            throw e; // <-- ALTERAÇÃO CHAVE: Relança o erro
         } catch (Exception e) {
             System.err.println("❌ Erro inesperado ao enviar o e-mail: " + e.getMessage());
             e.printStackTrace();
+            throw e; // <-- ALTERAÇÃO CHAVE: Relança o erro
         }
     }
 }
