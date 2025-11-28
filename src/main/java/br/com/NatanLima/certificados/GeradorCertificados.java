@@ -15,22 +15,22 @@ public class GeradorCertificados {
 
     public static void main(String[] args) {
         try {
+            // OBS: Assume-se que a classe 'LeitorPlanilhas' está funcionando corretamente
             List<Registro> registros = LeitorPlanilhas.lerPlanilha(CAMINHO_PLANILHA);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
             for (Registro registro : registros) {
 
                 // 1. Pula se já foi enviado
+                // A verificação abaixo (usando isBlank()) é robusta e trata 'null', "" e "   "
                 if (registro.getCertificadoEnviado() != null && !registro.getCertificadoEnviado().isBlank()) {
                     System.out.println("⏩ Certificado já enviado para: " + registro.getNomeCompleto());
                     continue;
                 }
 
-                // ✅ CORREÇÃO 1: Pular linhas em branco ou incompletas
-                // Isso impede o crash de 'DateTimeParseException' em linhas vazias
+                // Pula linhas em branco ou incompletas (necessário para evitar erros de parse)
                 if (registro.getNomeCompleto() == null || registro.getNomeCompleto().isBlank() ||
                         registro.getDataFinal() == null || registro.getDataFinal().isBlank()) {
-                    // Não é um erro, apenas pula a linha em branco no final da planilha
                     continue;
                 }
 
@@ -56,6 +56,7 @@ public class GeradorCertificados {
                         + "Segue em anexo o seu certificado do curso \"" + registro.getNomeDoCurso() + "\".\n\n"
                         + "Atenciosamente,\nEquipe de Certificação";
 
+                // O erro de envio será resolvido na classe ServicoEmail corrigida
                 ServicoEmail.enviarEmailComAnexo(
                         registro.getEmail(),
                         assunto,
@@ -63,7 +64,7 @@ public class GeradorCertificados {
                         caminhoCertificado
                 );
 
-                // 6. Atualizar planilha
+                // 6. Atualizar planilha (só é executado se o envio acima for bem-sucedido)
                 String dataEnvio = LocalDate.now().format(formatter);
                 registro.setCertificadoEnviado("Enviado na data " + dataEnvio);
                 LeitorPlanilhas.atualizarStatusEnvio(CAMINHO_PLANILHA, registro);
